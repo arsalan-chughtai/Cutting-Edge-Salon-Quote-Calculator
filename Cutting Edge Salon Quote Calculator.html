@@ -1,0 +1,686 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="color-scheme" content="light dark" />
+  <meta name="theme-color" content="#f5efe7" />
+  <link rel="icon" href="data:," />
+  <title>Cutting Edge Salon Quote Calculator</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:ital,wght@0,600;1,600&display=swap');
+
+    :root {
+      color-scheme: light dark;
+      --paper: #f5efe7;
+      --paper-2: #fffaf4;
+      --ink: #241c1a;
+      --muted: #6e625e;
+      --line: #d8ccc1;
+      --accent: #8f2d38;
+      --accent-strong: #6f1f2a;
+      --accent-soft: #ead6d3;
+      --gold: #a66a25;
+      --gold-soft: #f1dfc7;
+      --white: #ffffff;
+      --shadow: 0 24px 70px rgba(57, 34, 29, .13);
+      --focus: #b96830;
+      --danger: #a12d35;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --paper: #171311;
+        --paper-2: #211b18;
+        --ink: #f8efe7;
+        --muted: #c9bbb2;
+        --line: #463a35;
+        --accent: #d86d79;
+        --accent-strong: #ed8b95;
+        --accent-soft: #3f2426;
+        --gold: #e3aa64;
+        --gold-soft: #3d3021;
+        --white: #211b18;
+        --shadow: 0 24px 70px rgba(0, 0, 0, .35);
+        --focus: #f1b272;
+        --danger: #ef8189;
+      }
+    }
+
+    * { box-sizing: border-box; }
+    [hidden] { display: none !important; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background:
+        linear-gradient(90deg, transparent 49.88%, color-mix(in srgb, var(--line) 34%, transparent) 50%, transparent 50.12%) 0 0 / 72px 72px,
+        var(--paper);
+      color: var(--ink);
+      font-family: "DM Sans", sans-serif;
+      font-size: 16px;
+      line-height: 1.5;
+    }
+    button, input, select, textarea { font: inherit; }
+    button, a { -webkit-tap-highlight-color: transparent; }
+    :focus-visible { outline: 3px solid var(--focus); outline-offset: 3px; }
+
+    .shell {
+      width: min(1120px, calc(100% - 32px));
+      margin: 30px auto;
+      min-height: calc(100vh - 60px);
+      display: grid;
+      grid-template-columns: 300px minmax(0, 1fr);
+      background: var(--paper-2);
+      border: 1px solid var(--line);
+      box-shadow: var(--shadow);
+    }
+
+    .rail {
+      position: relative;
+      padding: 38px 30px 30px;
+      background: var(--ink);
+      color: var(--paper-2);
+      overflow: hidden;
+    }
+    .rail::after {
+      content: "";
+      position: absolute;
+      right: -72px;
+      bottom: -92px;
+      width: 230px;
+      height: 230px;
+      border: 38px solid color-mix(in srgb, var(--gold) 56%, transparent);
+      border-radius: 50%;
+      opacity: .45;
+    }
+    .rail-inner { position: relative; z-index: 1; height: 100%; display: flex; flex-direction: column; }
+    .business-type {
+      margin: 0 0 12px;
+      color: var(--gold);
+      font-weight: 700;
+      letter-spacing: .14em;
+      text-transform: uppercase;
+      font-size: .72rem;
+    }
+    .rail h1 {
+      margin: 0;
+      font-family: "Playfair Display", serif;
+      font-size: clamp(2.25rem, 4vw, 3.55rem);
+      line-height: .96;
+      letter-spacing: -.035em;
+      max-width: 230px;
+    }
+    .rating {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      margin: 22px 0 34px;
+      color: color-mix(in srgb, var(--paper-2) 80%, transparent);
+      font-size: .93rem;
+    }
+    .rating strong { color: var(--paper-2); }
+    .star { color: var(--gold); font-size: 1.15rem; }
+
+    .steps-nav { margin: 0; padding: 0; list-style: none; display: grid; gap: 15px; }
+    .step-nav-item {
+      display: grid;
+      grid-template-columns: 30px 1fr;
+      gap: 12px;
+      align-items: center;
+      color: color-mix(in srgb, var(--paper-2) 52%, transparent);
+      transition: color .2s ease;
+    }
+    .step-nav-item.active { color: var(--paper-2); }
+    .step-nav-item.done { color: color-mix(in srgb, var(--paper-2) 76%, transparent); }
+    .step-dot {
+      width: 30px;
+      height: 30px;
+      display: grid;
+      place-items: center;
+      border: 1px solid color-mix(in srgb, var(--paper-2) 24%, transparent);
+      border-radius: 50%;
+      font-size: .78rem;
+      font-weight: 700;
+    }
+    .active .step-dot { background: var(--accent); border-color: var(--accent); color: #fff; }
+    .done .step-dot { background: var(--gold); border-color: var(--gold); color: #1d1411; }
+    .step-label { font-size: .9rem; font-weight: 600; }
+
+    .rail-contact {
+      margin-top: auto;
+      padding-top: 42px;
+      font-size: .84rem;
+      color: color-mix(in srgb, var(--paper-2) 66%, transparent);
+    }
+    .rail-contact a { color: inherit; text-decoration-color: color-mix(in srgb, currentColor 45%, transparent); }
+
+    .content {
+      position: relative;
+      padding: clamp(30px, 6vw, 68px);
+      min-height: 680px;
+      display: flex;
+      flex-direction: column;
+    }
+    .mobile-top { display: none; }
+    .step { display: none; animation: enter .26s ease-out; }
+    .step.active { display: block; }
+    @keyframes enter { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: none; } }
+    @media (prefers-reduced-motion: reduce) { * { scroll-behavior: auto !important; animation: none !important; transition: none !important; } }
+
+    .kicker {
+      margin: 0 0 8px;
+      color: var(--accent);
+      font-size: .82rem;
+      font-weight: 700;
+    }
+    h2 {
+      margin: 0;
+      font-family: "Playfair Display", serif;
+      font-size: clamp(2rem, 4vw, 3.15rem);
+      line-height: 1.05;
+      letter-spacing: -.03em;
+      max-width: 680px;
+    }
+    .intro { margin: 16px 0 22px; max-width: 610px; color: var(--muted); font-size: 1.02rem; }
+    .demo-notice {
+      margin: 0 0 22px;
+      max-width: 670px;
+      padding: 10px 12px;
+      background: var(--gold-soft);
+      color: var(--ink);
+      border-radius: 5px;
+      font-size: .8rem;
+    }
+
+    .option-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+    .option {
+      width: 100%;
+      min-height: 92px;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      background: var(--paper-2);
+      color: var(--ink);
+      text-align: left;
+      padding: 16px;
+      cursor: pointer;
+      display: flex;
+      justify-content: space-between;
+      gap: 15px;
+      align-items: flex-start;
+      transition: border-color .16s ease, background .16s ease;
+    }
+    .option:hover { border-color: var(--accent); }
+    .option[aria-pressed="true"] { border-color: var(--accent); background: var(--accent-soft); box-shadow: inset 0 0 0 1px var(--accent); }
+    .option-title { display: block; font-weight: 700; font-size: .98rem; }
+    .option-note { display: block; margin-top: 4px; color: var(--muted); font-size: .81rem; }
+    .option-price { white-space: nowrap; color: var(--accent); font-size: .88rem; font-weight: 700; }
+
+    .group + .group { margin-top: 30px; }
+    .group-title { margin: 0 0 12px; font-size: .95rem; font-weight: 700; }
+    .segmented { display: grid; grid-template-columns: repeat(3, 1fr); border: 1px solid var(--line); border-radius: 9px; overflow: hidden; }
+    .segment {
+      border: 0;
+      border-right: 1px solid var(--line);
+      background: var(--paper-2);
+      color: var(--ink);
+      padding: 14px 10px;
+      cursor: pointer;
+      font-weight: 600;
+    }
+    .segment:last-child { border-right: 0; }
+    .segment[aria-pressed="true"] { background: var(--accent); color: #fff; }
+
+    .add-on-list { display: grid; gap: 10px; }
+    .add-on {
+      display: grid;
+      grid-template-columns: 34px minmax(0, 1fr) auto;
+      align-items: center;
+      gap: 12px;
+      min-height: 64px;
+      padding: 11px 14px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--paper-2);
+      color: var(--ink);
+      cursor: pointer;
+      text-align: left;
+    }
+    .toggle-mark {
+      width: 26px;
+      height: 26px;
+      display: grid;
+      place-items: center;
+      border: 1px solid var(--line);
+      border-radius: 50%;
+      color: transparent;
+      font-weight: 900;
+    }
+    .add-on[aria-pressed="true"] { border-color: var(--accent); background: var(--accent-soft); }
+    .add-on[aria-pressed="true"] .toggle-mark { background: var(--accent); border-color: var(--accent); color: #fff; }
+    .add-on strong { display: block; font-size: .92rem; }
+    .add-on small { color: var(--muted); }
+    .add-on-price { color: var(--accent); font-weight: 700; font-size: .88rem; }
+
+    .actions {
+      margin-top: auto;
+      padding-top: 34px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+    }
+    .btn {
+      min-height: 50px;
+      border-radius: 7px;
+      border: 1px solid transparent;
+      padding: 13px 20px;
+      cursor: pointer;
+      font-weight: 700;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 9px;
+    }
+    .btn-primary { background: var(--accent); color: #fff; }
+    .btn-primary:hover { background: var(--accent-strong); }
+    .btn-secondary { background: transparent; color: var(--ink); border-color: var(--line); }
+    .btn-secondary:hover { border-color: var(--accent); }
+    .btn[disabled] { opacity: .42; cursor: not-allowed; }
+    .step-hint { color: var(--muted); font-size: .82rem; }
+    .error { color: var(--danger); font-size: .85rem; min-height: 21px; margin: 12px 0 0; }
+
+    .result-layout { display: grid; grid-template-columns: .9fr 1.1fr; gap: 28px; align-items: start; }
+    .estimate-card {
+      padding: 24px;
+      border-radius: 12px;
+      background: var(--ink);
+      color: var(--paper-2);
+    }
+    .estimate-label { margin: 0; color: color-mix(in srgb, var(--paper-2) 65%, transparent); font-size: .78rem; font-weight: 700; }
+    .estimate-amount { margin: 4px 0 5px; font-family: "Playfair Display", serif; font-size: clamp(2.5rem, 6vw, 4.25rem); line-height: 1; color: var(--gold); }
+    .estimate-time { margin: 0 0 22px; color: color-mix(in srgb, var(--paper-2) 72%, transparent); font-size: .88rem; }
+    .summary-list { margin: 0; padding: 16px 0 0; list-style: none; border-top: 1px solid color-mix(in srgb, var(--paper-2) 20%, transparent); display: grid; gap: 9px; }
+    .summary-list li { display: flex; justify-content: space-between; gap: 14px; font-size: .82rem; }
+    .summary-list span:first-child { color: color-mix(in srgb, var(--paper-2) 58%, transparent); }
+    .fine-print { margin: 18px 0 0; color: var(--muted); font-size: .78rem; }
+
+    .lead-box h3 { margin: 0 0 5px; font-size: 1.08rem; }
+    .lead-box > p { margin: 0 0 18px; color: var(--muted); font-size: .9rem; }
+    .field-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .field { display: grid; gap: 6px; }
+    .field.full { grid-column: 1 / -1; }
+    label { font-size: .78rem; font-weight: 700; }
+    input, select, textarea {
+      width: 100%;
+      border: 1px solid var(--line);
+      border-radius: 7px;
+      background: var(--paper-2);
+      color: var(--ink);
+      padding: 11px 12px;
+    }
+    textarea { resize: vertical; min-height: 74px; }
+    .lead-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 15px; }
+    .lead-note { margin-top: 11px !important; font-size: .76rem !important; }
+    .copy-status { min-height: 20px; margin: 8px 0 0; color: var(--gold); font-size: .82rem; font-weight: 700; }
+
+    .footer-links { margin-top: 26px; display: flex; flex-wrap: wrap; gap: 16px; font-size: .8rem; }
+    .footer-links a { color: var(--muted); text-underline-offset: 3px; }
+
+    @media (max-width: 820px) {
+      .shell { width: min(100% - 20px, 680px); margin: 10px auto; min-height: calc(100vh - 20px); display: block; }
+      .rail { display: none; }
+      .content { padding: 26px 22px 108px; min-height: calc(100vh - 22px); }
+      .mobile-top { display: block; margin-bottom: 34px; }
+      .mobile-business { display: flex; justify-content: space-between; align-items: flex-start; gap: 14px; }
+      .mobile-business strong { font-family: "Playfair Display", serif; font-size: 1.18rem; }
+      .mobile-rating { color: var(--muted); font-size: .78rem; white-space: nowrap; }
+      .mobile-progress { margin-top: 16px; height: 3px; background: var(--line); }
+      .mobile-progress span { display: block; height: 100%; width: 25%; background: var(--accent); transition: width .25s ease; }
+      .mobile-step-label { margin-top: 8px; color: var(--muted); font-size: .76rem; }
+      .result-layout { grid-template-columns: 1fr; }
+      .actions {
+        position: fixed;
+        left: 50%;
+        bottom: 10px;
+        z-index: 20;
+        width: min(calc(100% - 20px), 680px);
+        margin: 0;
+        padding: 12px 22px calc(12px + env(safe-area-inset-bottom));
+        transform: translateX(-50%);
+        background: color-mix(in srgb, var(--paper-2) 96%, transparent);
+        border: 1px solid var(--line);
+        box-shadow: 0 -10px 28px rgba(57, 34, 29, .10);
+      }
+    }
+
+    @media (max-width: 540px) {
+      body { background: var(--paper-2); }
+      .shell { width: 100%; margin: 0; border: 0; box-shadow: none; min-height: 100vh; }
+      .content { padding: 22px 18px calc(108px + env(safe-area-inset-bottom)); }
+      h2 { font-size: 2.1rem; }
+      .intro { margin-bottom: 22px; }
+      .option-grid { grid-template-columns: 1fr; }
+      .option { min-height: 78px; }
+      .segmented { grid-template-columns: 1fr; }
+      .segment { border-right: 0; border-bottom: 1px solid var(--line); }
+      .segment:last-child { border-bottom: 0; }
+      .actions {
+        bottom: 0;
+        width: 100%;
+        padding: 12px 18px calc(12px + env(safe-area-inset-bottom));
+        border-right: 0;
+        border-bottom: 0;
+        border-left: 0;
+        align-items: stretch;
+      }
+      .actions .btn { flex: 1; padding-inline: 12px; }
+      .step-hint { display: none; }
+      .field-grid, .lead-actions { grid-template-columns: 1fr; }
+      .lead-actions .btn { width: 100%; }
+    }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <aside class="rail" aria-label="Salon and quote progress">
+      <div class="rail-inner">
+        <p class="business-type">Beauty salon · Cheney, Kansas</p>
+        <h1>Cutting Edge Salon</h1>
+        <div class="rating"><span class="star" aria-hidden="true">★</span><span><strong>4.7</strong> from 12 reviews</span></div>
+        <ol class="steps-nav">
+          <li class="step-nav-item active" data-nav="1"><span class="step-dot">1</span><span class="step-label">Choose a service</span></li>
+          <li class="step-nav-item" data-nav="2"><span class="step-dot">2</span><span class="step-label">Tell us about your hair</span></li>
+          <li class="step-nav-item" data-nav="3"><span class="step-dot">3</span><span class="step-label">Add finishing touches</span></li>
+          <li class="step-nav-item" data-nav="4"><span class="step-dot">4</span><span class="step-label">See your estimate</span></li>
+        </ol>
+        <div class="rail-contact">
+          <a href="tel:+13165406200">(316) 540-6200</a><br />
+          <a href="https://share.google/89mg7BQXMpoQcOh7a" target="_blank" rel="noopener noreferrer">219 N Main St, Cheney, KS 67025</a>
+        </div>
+      </div>
+    </aside>
+
+    <section class="content">
+      <div class="mobile-top">
+        <div class="mobile-business"><strong>Cutting Edge Salon</strong><span class="mobile-rating">★ 4.7 · 12 reviews</span></div>
+        <div class="mobile-progress" aria-hidden="true"><span id="mobileProgress"></span></div>
+        <div class="mobile-step-label" id="mobileStepLabel">Step 1 of 4 · Choose a service</div>
+      </div>
+
+      <section class="step active" data-step="1" aria-labelledby="step1-title">
+        <p class="kicker">Step 1 of 4</p>
+        <h2 id="step1-title">What can we help you with?</h2>
+        <p class="intro">Choose the closest match. Your estimate will adjust for hair length, thickness, and finishing touches.</p>
+        <p class="demo-notice"><strong>Demo pricing for illustration only.</strong> Final services and pricing must be confirmed with Cutting Edge Salon.</p>
+        <div class="option-grid" id="serviceOptions">
+          <button class="option" type="button" aria-pressed="false" data-service="Signature haircut" data-price="38" data-time="45"><span><span class="option-title">Signature haircut</span><span class="option-note">Consultation, cut, and finish</span></span><span class="option-price">from $38</span></button>
+          <button class="option" type="button" aria-pressed="false" data-service="Cut + blowout" data-price="56" data-time="70"><span><span class="option-title">Cut + blowout</span><span class="option-note">Shape, wash, and polished finish</span></span><span class="option-price">from $56</span></button>
+          <button class="option" type="button" aria-pressed="false" data-service="Root color" data-price="82" data-time="105"><span><span class="option-title">Root color</span><span class="option-note">Root touch-up and simple finish</span></span><span class="option-price">from $82</span></button>
+          <button class="option" type="button" aria-pressed="false" data-service="All-over color" data-price="105" data-time="135"><span><span class="option-title">All-over color</span><span class="option-note">Single-process color and finish</span></span><span class="option-price">from $105</span></button>
+          <button class="option" type="button" aria-pressed="false" data-service="Partial highlights" data-price="118" data-time="150"><span><span class="option-title">Partial highlights</span><span class="option-note">Face frame and upper sections</span></span><span class="option-price">from $118</span></button>
+          <button class="option" type="button" aria-pressed="false" data-service="Full highlights" data-price="155" data-time="190"><span><span class="option-title">Full highlights</span><span class="option-note">Dimensional lightening throughout</span></span><span class="option-price">from $155</span></button>
+        </div>
+        <p class="error" id="serviceError" role="status"></p>
+      </section>
+
+      <section class="step" data-step="2" aria-labelledby="step2-title">
+        <p class="kicker">Step 2 of 4</p>
+        <h2 id="step2-title">Tell us about your hair.</h2>
+        <p class="intro">Length and thickness can affect product use and appointment time.</p>
+        <div class="group">
+          <h3 class="group-title">Current length</h3>
+          <div class="segmented" id="lengthOptions">
+            <button class="segment" type="button" aria-pressed="true" data-value="Short" data-factor="1">Short</button>
+            <button class="segment" type="button" aria-pressed="false" data-value="Shoulder length" data-factor="1.10">Shoulder length</button>
+            <button class="segment" type="button" aria-pressed="false" data-value="Long" data-factor="1.18">Long</button>
+          </div>
+        </div>
+        <div class="group">
+          <h3 class="group-title">Hair thickness</h3>
+          <div class="segmented" id="thicknessOptions">
+            <button class="segment" type="button" aria-pressed="false" data-value="Fine" data-factor="0.96">Fine</button>
+            <button class="segment" type="button" aria-pressed="true" data-value="Medium" data-factor="1">Medium</button>
+            <button class="segment" type="button" aria-pressed="false" data-value="Thick" data-factor="1.15">Thick</button>
+          </div>
+        </div>
+      </section>
+
+      <section class="step" data-step="3" aria-labelledby="step3-title">
+        <p class="kicker">Step 3 of 4</p>
+        <h2 id="step3-title">Add a finishing touch.</h2>
+        <p class="intro">Optional extras help us build a more useful estimate. Pick as many as you like.</p>
+        <div class="add-on-list" id="addOnOptions">
+          <button class="add-on" type="button" aria-pressed="false" data-name="Deep conditioning treatment" data-price="18" data-time="15"><span class="toggle-mark">✓</span><span><strong>Deep conditioning treatment</strong><small>Extra moisture and softness</small></span><span class="add-on-price">+$18</span></button>
+          <button class="add-on" type="button" aria-pressed="false" data-name="Gloss or toner" data-price="28" data-time="25"><span class="toggle-mark">✓</span><span><strong>Gloss or toner</strong><small>Refresh tone and add shine</small></span><span class="add-on-price">+$28</span></button>
+          <button class="add-on" type="button" aria-pressed="false" data-name="Event styling" data-price="42" data-time="40"><span class="toggle-mark">✓</span><span><strong>Event styling</strong><small>Curls, waves, or an elevated finish</small></span><span class="add-on-price">+$42</span></button>
+          <button class="add-on" type="button" aria-pressed="false" data-name="Brow shaping" data-price="16" data-time="15"><span class="toggle-mark">✓</span><span><strong>Brow shaping</strong><small>A quick add-on during your visit</small></span><span class="add-on-price">+$16</span></button>
+        </div>
+      </section>
+
+      <section class="step" data-step="4" aria-labelledby="step4-title">
+        <p class="kicker">Your personalized estimate</p>
+        <h2 id="step4-title">A polished look, planned.</h2>
+        <p class="intro">Here is a starting range based on your selections. A stylist will confirm the final service and price.</p>
+        <div class="result-layout">
+          <div>
+            <div class="estimate-card">
+              <p class="estimate-label">ESTIMATED TOTAL</p>
+              <p class="estimate-amount" id="estimateAmount">$0–$0</p>
+              <p class="estimate-time" id="estimateTime">About 0 minutes</p>
+              <ul class="summary-list" id="summaryList"></ul>
+            </div>
+            <p class="fine-print">Illustrative demo pricing in USD. Final pricing may vary after consultation, product use, and service complexity.</p>
+          </div>
+          <div class="lead-box">
+            <h3>Ready to talk with a stylist?</h3>
+            <p>Add your details to prepare a quote summary, then call Cutting Edge Salon to check availability.</p>
+            <div class="field-grid">
+              <div class="field"><label for="name">Your name</label><input id="name" autocomplete="name" placeholder="First name" /></div>
+              <div class="field"><label for="phone">Best phone number</label><input id="phone" type="tel" autocomplete="tel" placeholder="(555) 555-5555" /></div>
+              <div class="field full"><label for="timing">Preferred timing</label><select id="timing"><option>As soon as possible</option><option>Within the next week</option><option>Within the next month</option><option>Just exploring</option></select></div>
+              <div class="field full"><label for="notes">Anything your stylist should know? <span style="font-weight:400;color:var(--muted)">(optional)</span></label><textarea id="notes" placeholder="Color history, inspiration, or scheduling notes"></textarea></div>
+            </div>
+            <div class="lead-actions">
+              <button class="btn btn-secondary" type="button" id="copyButton">Copy quote details</button>
+              <a class="btn btn-primary" href="tel:+13165406200">Call (316) 540-6200</a>
+            </div>
+            <p class="copy-status" id="copyStatus" role="status"></p>
+            <p class="lead-note">This demo does not send or store your information. Bring the copied summary to your call.</p>
+          </div>
+        </div>
+        <div class="footer-links">
+          <a href="https://share.google/89mg7BQXMpoQcOh7a" target="_blank" rel="noopener noreferrer">View location</a>
+          <a href="tel:+13165406200">Call the salon</a>
+        </div>
+      </section>
+
+      <div class="actions" id="mainActions">
+        <button class="btn btn-secondary" type="button" id="backButton" hidden>Back</button>
+        <span class="step-hint" id="stepHint">Choose one service to continue</span>
+        <button class="btn btn-primary" type="button" id="nextButton" disabled>Continue <span aria-hidden="true">→</span></button>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    (function () {
+      var state = {
+        step: 1,
+        service: null,
+        length: { name: 'Short', factor: 1 },
+        thickness: { name: 'Medium', factor: 1 },
+        addons: []
+      };
+      var labels = ['Choose a service', 'Tell us about your hair', 'Add finishing touches', 'See your estimate'];
+      var nextButton = document.getElementById('nextButton');
+      var backButton = document.getElementById('backButton');
+      var actions = document.getElementById('mainActions');
+      var stepHint = document.getElementById('stepHint');
+
+      function setSingle(groupId, button) {
+        document.querySelectorAll('#' + groupId + ' button').forEach(function (item) {
+          item.setAttribute('aria-pressed', item === button ? 'true' : 'false');
+        });
+      }
+
+      document.querySelectorAll('#serviceOptions .option').forEach(function (button) {
+        button.addEventListener('click', function () {
+          setSingle('serviceOptions', button);
+          state.service = {
+            name: button.dataset.service,
+            price: Number(button.dataset.price),
+            time: Number(button.dataset.time)
+          };
+          document.getElementById('serviceError').textContent = '';
+          stepHint.textContent = 'Your selection is ready';
+          nextButton.disabled = false;
+        });
+      });
+
+      document.querySelectorAll('#lengthOptions .segment').forEach(function (button) {
+        button.addEventListener('click', function () {
+          setSingle('lengthOptions', button);
+          state.length = { name: button.dataset.value, factor: Number(button.dataset.factor) };
+        });
+      });
+
+      document.querySelectorAll('#thicknessOptions .segment').forEach(function (button) {
+        button.addEventListener('click', function () {
+          setSingle('thicknessOptions', button);
+          state.thickness = { name: button.dataset.value, factor: Number(button.dataset.factor) };
+        });
+      });
+
+      document.querySelectorAll('#addOnOptions .add-on').forEach(function (button) {
+        button.addEventListener('click', function () {
+          var isActive = button.getAttribute('aria-pressed') === 'true';
+          button.setAttribute('aria-pressed', isActive ? 'false' : 'true');
+          var name = button.dataset.name;
+          state.addons = state.addons.filter(function (item) { return item.name !== name; });
+          if (!isActive) {
+            state.addons.push({ name: name, price: Number(button.dataset.price), time: Number(button.dataset.time) });
+          }
+        });
+      });
+
+      function roundToFive(value) { return Math.max(5, Math.round(value / 5) * 5); }
+
+      function calculate() {
+        var base = state.service.price * state.length.factor * state.thickness.factor;
+        var addTotal = state.addons.reduce(function (sum, item) { return sum + item.price; }, 0);
+        var middle = base + addTotal;
+        var low = roundToFive(middle * .94);
+        var high = roundToFive(middle * 1.12);
+        if (high <= low) high = low + 5;
+        var extraTime = state.addons.reduce(function (sum, item) { return sum + item.time; }, 0);
+        var factorTime = Math.round(state.service.time * ((state.length.factor + state.thickness.factor) / 2));
+        return { low: low, high: high, time: factorTime + extraTime };
+      }
+
+      function formatTime(minutes) {
+        if (minutes < 60) return 'About ' + minutes + ' minutes';
+        var hours = Math.floor(minutes / 60);
+        var mins = minutes % 60;
+        return 'About ' + hours + (hours === 1 ? ' hour' : ' hours') + (mins ? ' ' + mins + ' minutes' : '');
+      }
+
+      function renderEstimate() {
+        var result = calculate();
+        document.getElementById('estimateAmount').textContent = '$' + result.low + '–$' + result.high;
+        document.getElementById('estimateTime').textContent = formatTime(result.time);
+        var items = [
+          ['Service', state.service.name],
+          ['Hair', state.length.name + ' · ' + state.thickness.name]
+        ];
+        if (state.addons.length) items.push(['Extras', state.addons.map(function (item) { return item.name; }).join(', ')]);
+        else items.push(['Extras', 'None selected']);
+        document.getElementById('summaryList').innerHTML = items.map(function (item) {
+          return '<li><span>' + item[0] + '</span><strong>' + item[1] + '</strong></li>';
+        }).join('');
+      }
+
+      function goToStep(step) {
+        state.step = step;
+        document.querySelectorAll('.step').forEach(function (panel) {
+          panel.classList.toggle('active', Number(panel.dataset.step) === step);
+        });
+        document.querySelectorAll('.step-nav-item').forEach(function (item) {
+          var itemStep = Number(item.dataset.nav);
+          item.classList.toggle('active', itemStep === step);
+          item.classList.toggle('done', itemStep < step);
+          var dot = item.querySelector('.step-dot');
+          dot.textContent = itemStep < step ? '✓' : itemStep;
+        });
+        document.getElementById('mobileProgress').style.width = (step * 25) + '%';
+        document.getElementById('mobileStepLabel').textContent = 'Step ' + step + ' of 4 · ' + labels[step - 1];
+        backButton.hidden = step === 1;
+        actions.style.display = step === 4 ? 'none' : 'flex';
+        nextButton.innerHTML = step === 3 ? 'See my estimate <span aria-hidden="true">→</span>' : 'Continue <span aria-hidden="true">→</span>';
+        nextButton.disabled = step === 1 && !state.service;
+        if (step === 1) stepHint.textContent = state.service ? 'Your selection is ready' : 'Choose one service to continue';
+        if (step === 2) stepHint.textContent = 'Adjust both details if needed';
+        if (step === 3) stepHint.textContent = 'Extras are optional';
+        if (step === 4) renderEstimate();
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
+
+      nextButton.addEventListener('click', function () {
+        if (state.step === 1 && !state.service) {
+          document.getElementById('serviceError').textContent = 'Please choose a service before continuing.';
+          document.querySelector('#serviceOptions .option').focus();
+          return;
+        }
+        if (state.step < 4) goToStep(state.step + 1);
+      });
+
+      backButton.addEventListener('click', function () {
+        if (state.step > 1) goToStep(state.step - 1);
+      });
+
+      function buildSummary() {
+        var result = calculate();
+        var name = document.getElementById('name').value.trim() || 'Not provided';
+        var phone = document.getElementById('phone').value.trim() || 'Not provided';
+        var timing = document.getElementById('timing').value;
+        var notes = document.getElementById('notes').value.trim() || 'None';
+        var extras = state.addons.length ? state.addons.map(function (item) { return item.name; }).join(', ') : 'None';
+        return [
+          'Cutting Edge Salon quote request',
+          'Name: ' + name,
+          'Phone: ' + phone,
+          'Service: ' + state.service.name,
+          'Hair: ' + state.length.name + ', ' + state.thickness.name,
+          'Extras: ' + extras,
+          'Estimate: $' + result.low + '–$' + result.high + ' (illustrative)',
+          'Preferred timing: ' + timing,
+          'Notes: ' + notes
+        ].join('\n');
+      }
+
+      document.getElementById('copyButton').addEventListener('click', function () {
+        var status = document.getElementById('copyStatus');
+        var text = buildSummary();
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(text).then(function () {
+            status.textContent = 'Quote details copied. Bring them to your call.';
+          }).catch(function () {
+            status.textContent = 'Could not copy automatically. Please select and copy your details manually.';
+          });
+        } else {
+          var area = document.createElement('textarea');
+          area.value = text;
+          area.style.position = 'fixed';
+          area.style.opacity = '0';
+          document.body.appendChild(area);
+          area.select();
+          var copied = document.execCommand('copy');
+          area.remove();
+          status.textContent = copied ? 'Quote details copied. Bring them to your call.' : 'Could not copy automatically. Please take a screenshot instead.';
+        }
+      });
+    })();
+  </script>
+</body>
+</html>
